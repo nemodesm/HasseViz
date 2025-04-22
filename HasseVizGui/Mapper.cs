@@ -60,11 +60,11 @@ public sealed class Mapper : Game
     {
         CreateRenderTargets();
         
-        GraphHandler.Graph = Graph.BuildSimplified(new[,]
+        GraphHandler.Graph = Graph.Build(new[,]
         {
-            { false, false, false },
-            { true, true, false },
-            { true, true, true }
+            { true, false, false },
+            { false, true, false },
+            { true, true, false }
         });
         
         SpriteBatch = new SpriteBatch(GraphicsDevice);
@@ -86,6 +86,7 @@ public sealed class Mapper : Game
     private void HandleWindowResized(object? sender, EventArgs e)
     {
         Debug.Trace($"Client resized window \uf119 (new size: {Window.ClientBounds.Width}x{Window.ClientBounds.Height})");
+        GraphHandler.HandleGraphChange();
         CreateRenderTargets();
     }
 
@@ -120,37 +121,27 @@ public sealed class Mapper : Game
         Debug.Trace($"Dropped file: {file}");
     }
 
-    protected override void Update(GameTime gameTime)
-    {
-        // TODO: Add your update logic here
-
-        if (gameTime.TotalGameTime.TotalSeconds > 0.1 && (true || !ImGui.GetIO().WantCaptureMouse))
-        {
-            
-        }
-
-        base.Update(gameTime);
-    }
-
     private static Color ClearColor = new Color(0x212121);
     
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
 
-        GraphicsDevice.SetRenderTarget(UITarget);
-        GraphicsDevice.Clear(ClearColor);
-        SpriteBatch.Begin();
-        DrawWorld();
+        UI.Render(gameTime);
 
-        DrawUI();
-        SpriteBatch.End();
-        GraphicsDevice.SetRenderTarget(null);
+        if (GraphHandler.GraphChanged)
+        {
+            GraphicsDevice.SetRenderTarget(UITarget);
+            GraphicsDevice.Clear(ClearColor);
+            SpriteBatch.Begin();
+            DrawWorld();
+            SpriteBatch.End();
+            GraphicsDevice.SetRenderTarget(null);
+        }
         
         SpriteBatch.Begin();
         SpriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
         SpriteBatch.End();
-        UI.Render(gameTime);
 
         base.Draw(gameTime);
     }
@@ -158,11 +149,6 @@ public sealed class Mapper : Game
     private void DrawWorld()
     {
         GraphHandler.DrawGraph(Window.ClientBounds.Width, Window.ClientBounds.Height);
-    }
-
-    private void DrawUI()
-    {
-        //
     }
 
     public void SaveMap(string pathPath)

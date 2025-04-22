@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using HasseVizGui.Util;
 using HasseVizLib;
 using Mapper.Util;
@@ -11,8 +13,28 @@ namespace HasseVizGui;
 
 public static class GraphHandler
 {
-    public static Graph? Graph { get; set; }
+    private static Dictionary<GraphNode, float> _nodeXPos;
+    private static bool _graphChanged = false;
+    private static Graph _graph;
     
+    public static Graph? Graph
+    {
+        get => _graph;
+        set
+        {
+            if (_graph is not null)
+            {
+                _graph.GraphChanged -= HandleGraphChange;
+            }
+            _graphChanged = true;
+            _nodeXPos = new Dictionary<GraphNode, float>();
+            _graph = value;
+            _graph!.GraphChanged += HandleGraphChange;
+        }
+    }
+
+    public static bool GraphChanged => _graphChanged;
+
     public static void LoadGraphGeneral(string path)
     {
         var firstChar = File.ReadLines(path).First().First();
@@ -98,7 +120,7 @@ public static class GraphHandler
             var level = Graph.Levels[i];
             var nodeSpacingW = (winWidth - nodeDiameter * level.Count) / (level.Count + 1);
             var j = 0;
-            foreach (var node in level)
+            foreach (var node in level.ToImmutableSortedSet(new NodeXPosComparer()))
             {
                 var x = nodeSpacingW * (j + 1f);
                 var y = (levels - i) * levelSpacingH;
@@ -106,6 +128,7 @@ public static class GraphHandler
                 var nodeY = y - nodeDiameter / 2;
                 
                 nodeCenters[node] = new Vector2(nodeX, nodeY);
+                _nodeXPos[node] = nodeX;
                 
                 Draw.Circle(nodeX, nodeY, nodeDiameter / 2f, Color.White, 10);
                 Draw.TextCentered(Draw.DefaultFont, node.Key.ToString(), new Vector2(nodeX, nodeY), Color.White, nodeDiameter / 50f);
@@ -127,6 +150,55 @@ public static class GraphHandler
                     Draw.Line(nodeCenters[node] + new Vector2(0, nodeDiameter / 2), nodeCenters[child] - new Vector2(0, nodeDiameter / 2), Color.White, 2);
                 }
             }
+        }
+
+        _graphChanged = false;
+    }
+
+    internal static void HandleGraphChange()
+    {
+        _graphChanged = true;
+        _nodeXPos = new Dictionary<GraphNode, float>();
+    }
+    
+    private class NodeXPosComparer : IComparer<GraphNode>
+    {
+        public int Compare(GraphNode x, GraphNode y)
+        {
+            if (ReferenceEquals(x, y)) return 0;
+            if (y is null) return 1;
+            if (x is null) return -1;
+            
+            var sumParX = 0f;
+            sumParX = Single.NaN;
+            var parC = 0;
+            for (; parC < x.Children.Count; parC++)
+            {
+                var child = x.Children[parC];
+                if (child == x)
+                {
+                    // FIXME: there will be an incorrect division (child count is incremented without children)
+                    continue;
+                }
+                sumParX += _nodeXPos[child];
+            }
+
+            var xChildX = sumParX / parC;
+
+            sumParX = parC = 0;
+            
+            for (; parC < y.Children.Count; parC++)
+            {
+                var child = y.Children[parC];
+                if (child == y)
+                {
+                    // FIXME: there will be an incorrect division (child count is incremented without children)
+                    continue;
+                }
+                sumParX += _nodeXPos[child];
+            }
+
+            return xChildX.CompareTo(sumParX / parC);
         }
     }
 }

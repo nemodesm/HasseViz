@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace HasseVizLib;
 
@@ -27,7 +28,7 @@ public static class Debug
     /// <summary>
     /// The name of the application, used in determining the path of the log files
     /// </summary>
-    private const string ApplicationName = "Faster Than Grapple";
+    private const string ApplicationName = "HasseViz";
     
     /// <summary>
     /// The writer used to write to the log file
@@ -120,6 +121,7 @@ public static class Debug
         return $"{GetTimeStamp()}:{stackTrace.GetFrame(0)?.GetMethod()?.DeclaringType!.Name}";
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void WriteMessage(string message, ConsoleColor color = ConsoleColor.White)
     {
 #if VISUAL_STUDIO
@@ -165,6 +167,7 @@ public static class Debug
     /// Logs an informative message to the log file
     /// </summary>
     /// <param name="message">The message to log</param>
+    [Conditional("DEBUG")]
     public static void Log(object? message)
     {
         var toLog = $"[{GetPrefix()}/INFO]: {message}".TrimEnd();

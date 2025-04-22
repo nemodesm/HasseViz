@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace HasseVizLib;
 
 public class Graph
@@ -7,6 +5,8 @@ public class Graph
     private HashSet<GraphNode>[] _levels;
     
     public HashSet<GraphNode>[] Levels => _levels;
+
+    public Action? GraphChanged;
 
     /// <summary>
     /// Removes instances o a->b and a->c and b->c, and simplify them to a->b and b->c
@@ -72,6 +72,8 @@ public class Graph
                 }
             }
         }
+        
+        GraphChanged?.Invoke();
     }
     
     public static Graph Build(bool[,] matrix)

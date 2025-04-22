@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+using System;
 using HasseVizGui;
+using HasseVizLib;
 using ImGuiNET;
 using Mapper.Util;
-using Microsoft.Xna.Framework;
 using NativeFileDialogSharp;
 using GameTime = Microsoft.Xna.Framework.GameTime;
 
@@ -11,6 +11,8 @@ namespace Mapper.Gui;
 public static class UI
 {
     public static ImGuiRenderer Renderer;
+
+    private static bool CyclePopup;
 
     static UI()
     {
@@ -23,33 +25,73 @@ public static class UI
         Renderer.BeforeLayout(gameTime);
         {
             MainMenu();
+            Popups();
         }
         Renderer.AfterLayout();
+    }
+
+    public static void Popups()
+    {
+        if (CyclePopup)
+        {
+            ImGui.OpenPopup(nameof(CyclePopup));
+            CyclePopup = false;
+        }
+
+        if (ImGui.BeginPopup(nameof(CyclePopup)))
+        {
+            ImGui.Text("A cycle has been detected in you graph");
+            ImGui.Text("Load aborted");
+            ImGui.EndPopup();
+        }
     }
 
     public static void MenuItemFile()
     {
         if (ImGui.BeginMenu("File")) {
 
-            if (ImGui.MenuItem("Load Text"))
+            if (ImGui.MenuItem("Load"))
             {
                 var path = Dialog.FileOpen();
 
                 if (path is not null && path.IsOk)
                 {
-                    GraphHandler.LoadGraphText(path.Path);
+                    try
+                    {
+                        GraphHandler.LoadGraphGeneral(path.Path);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e.Message, e.StackTrace);
+                        if (e.Message == "Cycle detected")
+                        {
+                            CyclePopup = true;
+                        }
+                    }
                 }
             }
 
-            if (ImGui.MenuItem("Load SemiBinary"))
+            /*if (ImGui.MenuItem("Load SemiBinary"))
             {
                 var path = Dialog.FileOpen();
 
                 if (path is not null && path.IsOk)
                 {
-                    GraphHandler.LoadGraphBinText(path.Path);
+                    try
+                    {
+                        GraphHandler.LoadGraphBinText(path.Path);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(e.Message, e.StackTrace);
+                        if (e.Message == "Cycle detected")
+                        {
+                            CyclePopup = true;
+                        }
+                    }
                 }
             }
+            */
             
             if (ImGui.BeginMenu("Open Recent")) {
                 if (AppData.RecentFiles.Count == 0)
@@ -57,11 +99,22 @@ public static class UI
                     ImGui.Text("No recent files");
                 }
                 
-                foreach (var recentFile in AppData.RecentFiles)
+                foreach (var recentFile in AppData.RecentFiles.ToArray())
                 {
                     if (ImGui.MenuItem(recentFile))
                     {
-                        GraphHandler.LoadGraphGeneral(recentFile);
+                        try
+                        {
+                            GraphHandler.LoadGraphGeneral(recentFile);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogError(e.Message, e.StackTrace);
+                            if (e.Message == "Cycle detected")
+                            {
+                                CyclePopup = true;
+                            }
+                        }
                     }
                 }
                 
