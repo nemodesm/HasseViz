@@ -43,8 +43,11 @@ public static class AppData
                 return;
             }
 
-            //BGCol = Vector3.Parse(lines[1]);
-            //VertCol = Vector3.Parse(lines[2]);
+            var split = lines[1].Split(' ');
+            BGCol = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
+
+            split = lines[2].Split(' ');
+            VertCol = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
             RecentFiles = new List<string>(lines.Skip(3));
         }
     }
@@ -54,8 +57,8 @@ public static class AppData
         using (var f = File.CreateText(FilePath))
         {
             f.WriteLine(Version);
-            f.WriteLine(BGCol.ToString());
-            f.WriteLine(VertCol.ToString());
+            f.WriteLine($"{BGCol.X} {BGCol.Y} {BGCol.Z}");
+            f.WriteLine($"{VertCol.X} {VertCol.Y} {VertCol.Z}");
             foreach (var recentFile in RecentFiles)
             {
                 f.WriteLine(recentFile);
