@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 
-namespace Mapper.Util;
+namespace HasseVizGui.Util;
 
 public static class Calc
 {

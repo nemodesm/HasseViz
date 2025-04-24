@@ -2,10 +2,10 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using HasseVizGui.Gui;
+using HasseVizGui.Util;
 using HasseVizLib;
 using ImGuiNET;
-using Mapper.Gui;
-using Mapper.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -60,12 +60,24 @@ public sealed class Mapper : Game
     {
         CreateRenderTargets();
         
-        GraphHandler.Graph = Graph.Build(new[,]
+        /*GraphHandler.Graph = Graph.Build(new[,]
         {
             { true, false, false },
             { false, true, false },
             { true, true, false }
-        });
+        });*/
+
+        const int size = 25;
+        var matrix = new bool[size, size];
+        for (var i = 0; i < size; i++)
+        {
+            for (var j = 0; j < size; j++)
+            {
+                matrix[i, j] = Random.Shared.Next() % 2 == 0 && i <= j;
+            }
+        }
+        
+        GraphHandler.Graph = Graph.Build(matrix);
         
         SpriteBatch = new SpriteBatch(GraphicsDevice);
         
@@ -120,19 +132,15 @@ public sealed class Mapper : Game
         GraphHandler.LoadGraphGeneral(file);
         Debug.Trace($"Dropped file: {file}");
     }
-
-    private static Color ClearColor = new Color(0x212121);
     
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
 
-        UI.Render(gameTime);
-
         if (GraphHandler.GraphChanged)
         {
             GraphicsDevice.SetRenderTarget(UITarget);
-            GraphicsDevice.Clear(ClearColor);
+            GraphicsDevice.Clear(AppData.BGColMG);
             SpriteBatch.Begin();
             DrawWorld();
             SpriteBatch.End();
@@ -142,6 +150,8 @@ public sealed class Mapper : Game
         SpriteBatch.Begin();
         SpriteBatch.Draw(UITarget, Vector2.Zero, Color.White);
         SpriteBatch.End();
+
+        UI.Render(gameTime);
 
         base.Draw(gameTime);
     }

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using HasseVizGui.Util;
 using HasseVizLib;
-using Mapper.Util;
 using Microsoft.Xna.Framework;
 
 namespace HasseVizGui;
@@ -112,29 +111,41 @@ public static class GraphHandler
         
         //var levelHeight = winHeight / levels;
         var nodeDiameter = levelSpacingH / 3f;
+        var nodeRadius = nodeDiameter / 2;
 
         var nodeCenters = new Dictionary<GraphNode, Vector2>();
+        
+        Debug.Trace($"{winWidth}, {nodeDiameter}");
+
+        #region Nodes
         
         for (var i = 0; i < levels; i++)
         {
             var level = Graph.Levels[i];
-            var nodeSpacingW = (winWidth - nodeDiameter * level.Count) / (level.Count + 1);
+            var nodeSpacingW = (winWidth /*- nodeDiameter * level.Count*/) / (level.Count + 1);
+            Debug.Trace(nodeSpacingW);
             var j = 0;
             foreach (var node in level.ToImmutableSortedSet(new NodeXPosComparer()))
             {
                 var x = nodeSpacingW * (j + 1f);
                 var y = (levels - i) * levelSpacingH;
-                var nodeX = x + nodeDiameter / 2;
-                var nodeY = y - nodeDiameter / 2;
+                var nodeX = x;// - nodeRadius;
+                var nodeY = y;// - nodeRadius;
                 
                 nodeCenters[node] = new Vector2(nodeX, nodeY);
                 _nodeXPos[node] = nodeX;
                 
-                Draw.Circle(nodeX, nodeY, nodeDiameter / 2f, Color.White, 10);
-                Draw.TextCentered(Draw.DefaultFont, node.Key.ToString(), new Vector2(nodeX, nodeY), Color.White, nodeDiameter / 50f);
+                Draw.Circle(nodeX, nodeY, nodeRadius, AppData.VertColMG, 10);
+                var key = node.Key.ToString();
+                Debug.Trace($"{key}: ({nodeX}, {nodeY})");
+                Draw.TextCentered(Draw.DefaultFont, key, new Vector2(nodeX, nodeY), AppData.VertColMG, nodeDiameter / 50f / key.Length);
                 j++;
             }
         }
+
+        #endregion
+        
+        #region Connections
         
         foreach (var level in Graph.Levels)
         {
@@ -147,10 +158,12 @@ public static class GraphHandler
                         // TODO: self reference, should do a loop
                         continue;
                     }
-                    Draw.Line(nodeCenters[node] + new Vector2(0, nodeDiameter / 2), nodeCenters[child] - new Vector2(0, nodeDiameter / 2), Color.White, 2);
+                    Draw.Line(nodeCenters[node] + new Vector2(0, nodeRadius), nodeCenters[child] - new Vector2(0, nodeRadius), AppData.VertColMG, 2);
                 }
             }
         }
+        
+        #endregion
 
         _graphChanged = false;
     }
@@ -198,7 +211,8 @@ public static class GraphHandler
                 sumParX += _nodeXPos[child];
             }
 
-            return xChildX.CompareTo(sumParX / parC);
+            var compareTo = xChildX.CompareTo(sumParX / parC);
+            return compareTo == 0 ? 1 : -compareTo;
         }
     }
 }

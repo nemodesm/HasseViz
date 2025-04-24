@@ -1,7 +1,7 @@
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Mapper.Gui;
+namespace HasseVizGui.Gui;
 
 public static class DrawVertDeclaration
 {

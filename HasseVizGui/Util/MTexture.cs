@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 // TODO: document
 
-namespace FasterThanGrapple.Graphics;
+namespace HasseVizGui.Util;
 
 public class MTexture
 {

@@ -1,6 +1,4 @@
 ﻿using System;
-using FasterThanGrapple.Graphics;
-using Mapper.Util;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 

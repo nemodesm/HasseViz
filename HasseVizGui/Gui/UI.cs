@@ -1,22 +1,22 @@
 using System;
-using HasseVizGui;
+using HasseVizGui.Util;
 using HasseVizLib;
 using ImGuiNET;
-using Mapper.Util;
 using NativeFileDialogSharp;
 using GameTime = Microsoft.Xna.Framework.GameTime;
 
-namespace Mapper.Gui;
+namespace HasseVizGui.Gui;
 
 public static class UI
 {
     public static ImGuiRenderer Renderer;
 
     private static bool CyclePopup;
+    private static bool settingsOpen;
 
     static UI()
     {
-        Renderer = new ImGuiRenderer(HasseVizGui.Mapper.Instance);
+        Renderer = new ImGuiRenderer(Mapper.Instance);
         Renderer.RebuildFontAtlas();
     }
     
@@ -25,9 +25,28 @@ public static class UI
         Renderer.BeforeLayout(gameTime);
         {
             MainMenu();
+            Settings();
             Popups();
         }
         Renderer.AfterLayout();
+    }
+
+    private static void Settings()
+    {
+        if (settingsOpen && ImGui.Begin("Settings", ref settingsOpen, ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize))
+        {
+            if (ImGui.ColorPicker3("Background Color", ref AppData.BGCol))
+            {
+                GraphHandler.HandleGraphChange();
+            }
+
+            if (ImGui.ColorPicker3("Vertex Color", ref AppData.VertCol))
+            {
+                GraphHandler.HandleGraphChange();
+            }
+
+            ImGui.End();
+        }
     }
 
     public static void Popups()
@@ -126,27 +145,55 @@ public static class UI
                 GraphHandler.Graph!.Simplify();
             }
 
-            if (ImGui.MenuItem("Save as..."))
+            if (ImGui.BeginMenu("Export To"))
             {
-                var path = Dialog.FileSave();
-                /*Nfd.SaveDialog(out var path, 
-                    new Dictionary<string, string>()
-                    {
-                        { "Map Files", "*.mpr" } // MaPpeR
-                    },
-                    $"{Map.AreaName}.mpr",
-                    "maps/");*/
-
-                if (path is not null && path.IsOk)
+                if (ImGui.MenuItem("PNG"))
                 {
-                    HasseVizGui.Mapper.Instance.SaveMap(path.Path);
+                    var path = Dialog.FileSave();
+                    /*Nfd.SaveDialog(out var path,
+                        new Dictionary<string, string>()
+                        {
+                            { "Map Files", "*.mpr" } // MaPpeR
+                        },
+                        $"{Map.AreaName}.mpr",
+                        "maps/");*/
+
+                    if (path is not null && path.IsOk)
+                    {
+                        Mapper.Instance.SaveMap(path.Path);
+                    }
                 }
+
+                if (ImGui.MenuItem("TGF"))
+                {
+                    var path = Dialog.FileSave();
+                    /*Nfd.SaveDialog(out var path,
+                        new Dictionary<string, string>()
+                        {
+                            { "Map Files", "*.mpr" } // MaPpeR
+                        },
+                        $"{Map.AreaName}.mpr",
+                        "maps/");*/
+
+                    if (path is not null && path.IsOk)
+                    {
+                        GraphHandler.Graph.SaveToTGF(path.Path);
+                    }
+                }
+                
+                ImGui.EndMenu();
+            }
+            ImGui.Separator();
+
+            if (ImGui.MenuItem("Settings"))
+            {
+                settingsOpen = true;
             }
             ImGui.Separator();
 
             if (ImGui.MenuItem("Quit"))
             {
-                HasseVizGui.Mapper.Instance.Exit();
+                Mapper.Instance.Exit();
             }
             
             ImGui.EndMenu();
